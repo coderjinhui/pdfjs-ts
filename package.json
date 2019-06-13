@@ -1,6 +1,6 @@
 {
   "name": "pdfjs-ts",
-  "version": "1.0.0",
+  "version": "0.0.2",
   "description": "simple pdfjs in typescript",
   "main": "index.js",
   "scripts": {

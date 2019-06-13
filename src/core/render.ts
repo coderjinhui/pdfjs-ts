@@ -2,13 +2,13 @@ import { TextLayerBuilder } from 'pdfjs-dist/web/pdf_viewer';
 import { FactoryOptions } from './factory';
 
 export class Renderer {
-  pdfDoc = null;
+  pdfDoc:any = null;
   pageNum = 1;
   pageRendering = false;
-  pageNumPending = null;
+  pageNumPending: number = -1;
   scale = 0.8;
 
-  constructor(private options: FactoryOptions, pdfDoc) {
+  constructor(private options: FactoryOptions, pdfDoc: any) {
     this.pdfDoc = pdfDoc;
   }
 
@@ -46,7 +46,7 @@ export class Renderer {
     container.setAttribute('class', 'page-' + num);
     container.setAttribute('style', 'position: relative');
 
-    this.pdfDoc.getPage(num).then((page) => {
+    this.pdfDoc.getPage(num).then((page: any) => {
       const viewport = page.getViewport({scale: this.scale});
 
       canvas.height = viewport.height;
@@ -61,17 +61,17 @@ export class Renderer {
         enableWebGL: true
       };
       const renderTask = page.render(renderContext);
-      renderTask.onContinue = (cont) => {
+      renderTask.onContinue = (cont: any) => {
         cont();
       };
       // Wait for rendering to finish
       renderTask.promise.then(() => {
         this.pageRendering = false;
         container.removeAttribute('hidden');
-        if (this.pageNumPending !== null) {
+        if (this.pageNumPending !== -1) {
           // New page rendering is pending
           this.renderPage(this.pageNumPending);
-          this.pageNumPending = null;
+          this.pageNumPending = -1;
         }
         if (this.options.renderText) {
           this.renderText(container, page, viewport);
@@ -105,10 +105,10 @@ export class Renderer {
       await page.render(renderContext).promise;
       this.pageRendering = false;
       container.removeAttribute('hidden');
-      if (this.pageNumPending !== null) {
+      if (this.pageNumPending !== -1) {
         // New page rendering is pending
         this.renderPage(this.pageNumPending);
-        this.pageNumPending = null;
+        this.pageNumPending = -1;
       }
       if (this.options.renderText) {
         await this.renderTextSync(container, page, viewport);
@@ -119,8 +119,8 @@ export class Renderer {
     };
   }
 
-  renderText(container, page, viewport) {
-    page.getTextContent().then(textContent => {
+  renderText(container: Element, page: any, viewport: any) {
+    page.getTextContent().then((textContent: any) => {
       // 创建文本图层div
       const textLayerDiv = document.createElement('div');
       textLayerDiv.setAttribute('class', 'textLayer');
@@ -136,7 +136,7 @@ export class Renderer {
     });
   }
 
-  async renderTextSync(container, page, viewport) {
+  async renderTextSync(container: Element, page: any, viewport: any) {
     const textContent = await page.getTextContent();
     // console.log(textContent.items[0], textContent.styles);
     if (textContent) {

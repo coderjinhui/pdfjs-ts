@@ -1,11 +1,14 @@
 import PDFJS from 'pdfjs-dist';
 
-import { Renderer, FactoryOptions, FindCtrl } from './src/core';
+import { Renderer, FactoryOptions, FindCtrl } from './core';
+
+import { ILoadEvent } from './interface'
+
 
 export class PDFTS {
   public option: FactoryOptions;
-  public renderer: Renderer;
-  public findCtrl: FindCtrl;
+  public renderer!: Renderer;
+  public findCtrl!: FindCtrl;
 
   // pdf 相关属性
   pdfDoc = null;
@@ -18,18 +21,18 @@ export class PDFTS {
   initial(): Promise<any> {
     const loadTask = PDFJS.getDocument(this.option.url);
     // console.log(loadTask);
-    loadTask.onProgress = (loadEvent) => {
+    loadTask.onProgress = (loadEvent: ILoadEvent) => {
       let progress = loadEvent.loaded / loadEvent.total * 100;
       progress = Number(progress.toFixed(2));
       progress = progress >= 100 ? 100 : progress;
       console.log('loading: ', progress, '%');
     };
-    loadTask.promise.then(pdf => {
+    loadTask.promise.then((pdf: any) => {
       this.pdfDoc = pdf;
       this.initAfterLoad();
     });
     return new Promise((resolve, reject) => {
-      loadTask.onProgress = (loadEvent) => {
+      loadTask.onProgress = (loadEvent: any) => {
         let progress = loadEvent.loaded / loadEvent.total * 100;
         progress = Number(progress.toFixed(2));
         progress = progress >= 100 ? 100 : progress;

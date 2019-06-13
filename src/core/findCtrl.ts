@@ -11,26 +11,26 @@ export interface ISearchInputMultiple {
 }
 
 export class FindCtrl {
-  public findController;
-  private pdfDoc = null;
+  public findController: any;
+  private pdfDoc: any = null;
   // 按页存储pdf文本内容
-  private pdfText = [];
+  private pdfText: any = [];
   // 存储搜索词在每页出现的数量
-  private searchPage = [];
+  private searchPage: any = [];
   // 按顺序存储每个搜索词出现的pageNumber
-  private searchResult = [];
+  private searchResult: any = [];
   // 按顺序存储每个搜索关键词的DOM
   private searchContenrDOM: Element[] = [];
   // 存储当前的搜索高亮index
   private currentWordIndex = 0;
   // 存储keyword的source
-  private keywordSourceHTML = [];
+  private keywordSourceHTML: any[][] = [];
   // 存储keywordSourceHTML的长度
   private keywordSourceHTMLlength = -1;
-  constructor(pdfDoc) {
+  constructor(pdfDoc: any) {
     this.pdfDoc = pdfDoc;
   }
-  addContext(index, context) {
+  addContext(index: number, context: string) {
     this.pdfText[index] = context;
   }
 
@@ -48,13 +48,13 @@ export class FindCtrl {
     }
   }
 
-  private appendPageContent(pageIndex) {
+  private appendPageContent(pageIndex: number) {
     this.pdfDoc.getPage(pageIndex + 1)
-      .then(page => page.getTextContent())
-      .then(textCont => {
+      .then((page: any) => page.getTextContent())
+      .then((textCont: any) => {
         let text = '';
         if (textCont) {
-          text = textCont.items.reduce((accumulator, currentValue) => {
+          text = textCont.items.reduce((accumulator: any, currentValue: any) => {
             return accumulator + ' ' + currentValue.str;
           }, '');
         }
@@ -68,12 +68,19 @@ export class FindCtrl {
 
   search(option: ISearchInput | ISearchInputMultiple) {
     this.cleanSearch();
-    if (option['q']) {
+    if (IsSearchInput(option)) {
       // single search!!
       return this.singleSearch(option as ISearchInput);
-    } else if (option['keywords']) {
+    } else if (IsSearchInputMultiple(option)) {
       // multiple search
       return this.multipleSearch(option as ISearchInputMultiple);
+    }
+
+    function IsSearchInput(option: ISearchInput | ISearchInputMultiple): option is ISearchInput {
+      return (option as ISearchInput).q !== undefined;
+    }
+    function IsSearchInputMultiple(option: ISearchInput | ISearchInputMultiple): option is ISearchInputMultiple {
+      return (option as ISearchInputMultiple).keywords !== undefined;
     }
   }
 
@@ -96,7 +103,7 @@ export class FindCtrl {
         this.renderKeyword(i + 1, word);
         this.searchPage[i] = result.length;
         sum += result.length;
-        result.forEach((ele) => {
+        result.forEach(() => {
           this.searchResult.push(i + 1);
         });
       }
@@ -127,7 +134,7 @@ export class FindCtrl {
         this.renderKeyword(i + 1, word);
         this.searchPage[i] = result.length;
         sum += result.length;
-        result.forEach((ele) => {
+        result.forEach(() => {
           this.searchResult.push(i + 1);
         });
       }
@@ -141,9 +148,9 @@ export class FindCtrl {
   }
 
   private prepareRenderWord(pageIndex: number) {
-    const pageDoms = document.querySelectorAll(`.page-${pageIndex + 1} .textLayer span`);
+    const pageDoms = <NodeListOf<Element>>document.querySelectorAll(`.page-${pageIndex + 1} .textLayer span`);
     this.keywordSourceHTML[pageIndex] = [];
-    pageDoms.forEach(span => {
+    pageDoms.forEach((span: Element) => {
       this.keywordSourceHTML[pageIndex].push(span.innerHTML);
     });
   }
@@ -160,7 +167,7 @@ export class FindCtrl {
         span.innerHTML = html;
       }
     });
-    document.querySelector('.pdfkeywords.highlight').className = 'pdfkeywords highlight selected';
+    (document.querySelector('.pdfkeywords.highlight') as Element).className = 'pdfkeywords highlight selected';
   }
 
   renderSelectedKeyword(lastIndex: number, currentIndex: number) {
