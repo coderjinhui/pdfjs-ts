@@ -42,7 +42,7 @@ var Renderer = /** @class */ (function () {
         this.pdfDoc = null;
         this.pageNum = 1;
         this.pageRendering = false;
-        this.pageNumPending = null;
+        this.pageNumPending = -1;
         this.scale = 0.8;
         this.pdfDoc = pdfDoc;
     }
@@ -117,10 +117,10 @@ var Renderer = /** @class */ (function () {
             renderTask.promise.then(function () {
                 _this.pageRendering = false;
                 container.removeAttribute('hidden');
-                if (_this.pageNumPending !== null) {
+                if (_this.pageNumPending !== -1) {
                     // New page rendering is pending
                     _this.renderPage(_this.pageNumPending);
-                    _this.pageNumPending = null;
+                    _this.pageNumPending = -1;
                 }
                 if (_this.options.renderText) {
                     _this.renderText(container, page, viewport);
@@ -161,10 +161,10 @@ var Renderer = /** @class */ (function () {
                         _a.sent();
                         this.pageRendering = false;
                         container.removeAttribute('hidden');
-                        if (this.pageNumPending !== null) {
+                        if (this.pageNumPending !== -1) {
                             // New page rendering is pending
                             this.renderPage(this.pageNumPending);
-                            this.pageNumPending = null;
+                            this.pageNumPending = -1;
                         }
                         if (!this.options.renderText) return [3 /*break*/, 4];
                         return [4 /*yield*/, this.renderTextSync(container, page, viewport)];

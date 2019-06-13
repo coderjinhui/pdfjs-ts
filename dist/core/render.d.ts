@@ -1,10 +1,10 @@
 import { FactoryOptions } from './factory';
 export declare class Renderer {
     private options;
-    pdfDoc: null;
+    pdfDoc: any;
     pageNum: number;
     pageRendering: boolean;
-    pageNumPending: null;
+    pageNumPending: number;
     scale: number;
     constructor(options: FactoryOptions, pdfDoc: any);
     setScale(scale: number): void;
@@ -15,8 +15,8 @@ export declare class Renderer {
     renderPageSync(num: number): Promise<{
         container: HTMLDivElement;
     }>;
-    renderText(container: any, page: any, viewport: any): void;
-    renderTextSync(container: any, page: any, viewport: any): Promise<void>;
+    renderText(container: Element, page: any, viewport: any): void;
+    renderTextSync(container: Element, page: any, viewport: any): Promise<void>;
     /**
    * If another page rendering in progress, waits until the rendering is
    * finised. Otherwise, executes rendering immediately.

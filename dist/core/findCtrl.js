@@ -59,13 +59,19 @@ var FindCtrl = /** @class */ (function () {
     };
     FindCtrl.prototype.search = function (option) {
         this.cleanSearch();
-        if (option['q']) {
+        if (IsSearchInput(option)) {
             // single search!!
             return this.singleSearch(option);
         }
-        else if (option['keywords']) {
+        else if (IsSearchInputMultiple(option)) {
             // multiple search
             return this.multipleSearch(option);
+        }
+        function IsSearchInput(option) {
+            return option.q !== undefined;
+        }
+        function IsSearchInputMultiple(option) {
+            return option.keywords !== undefined;
         }
     };
     FindCtrl.prototype.singleSearch = function (option) {
@@ -88,7 +94,7 @@ var FindCtrl = /** @class */ (function () {
                 this_1.renderKeyword(i + 1, word);
                 this_1.searchPage[i] = result.length;
                 sum += result.length;
-                result.forEach(function (ele) {
+                result.forEach(function () {
                     _this.searchResult.push(i + 1);
                 });
             }
@@ -123,7 +129,7 @@ var FindCtrl = /** @class */ (function () {
                 this_2.renderKeyword(i + 1, word);
                 this_2.searchPage[i] = result.length;
                 sum += result.length;
-                result.forEach(function (ele) {
+                result.forEach(function () {
                     _this.searchResult.push(i + 1);
                 });
             }

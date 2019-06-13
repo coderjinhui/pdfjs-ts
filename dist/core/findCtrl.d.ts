@@ -17,26 +17,26 @@ export declare class FindCtrl {
     private keywordSourceHTML;
     private keywordSourceHTMLlength;
     constructor(pdfDoc: any);
-    addContext(index: any, context: any): void;
+    addContext(index: number, context: string): void;
     private cleanSearch;
     initial(): void;
     private appendPageContent;
     search(option: ISearchInput | ISearchInputMultiple): {
         total: number;
-        pageDistribution: never[];
-        wordInPage: never[];
+        pageDistribution: any[];
+        wordInPage: any[];
     } | undefined;
     private singleSearch;
     private multipleSearch;
     private prepareRenderWord;
     private renderKeyword;
     renderSelectedKeyword(lastIndex: number, currentIndex: number): {
-        pageNumber: never;
+        pageNumber: any;
     };
     renderNext(): {
-        pageNumber: never;
+        pageNumber: any;
     };
     renderPrev(): {
-        pageNumber: never;
+        pageNumber: any;
     };
 }
