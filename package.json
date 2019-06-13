@@ -1,0 +1,28 @@
+{
+  "name": "pdfjs-ts",
+  "version": "1.0.0",
+  "description": "simple pdfjs in typescript",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/coderjinhui/pdfjs-ts.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/coderjinhui/pdfjs-ts/issues"
+  },
+  "homepage": "https://github.com/coderjinhui/pdfjs-ts#readme",
+  "devDependencies": {
+    "typescript": "^3.5.1"
+  },
+  "dependencies": {
+    "fastscan": "^1.0.6",
+    "pdfjs-dist": "2.1.266"
+  }
+}
