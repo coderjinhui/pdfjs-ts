@@ -61,7 +61,6 @@ this.pdf = new PDFTS({
 this.pdf.initial().then(_ => {
   this.pdf.renderer.render();
 });
-
 ```
 
 ## Feature
