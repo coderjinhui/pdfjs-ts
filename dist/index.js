@@ -15,26 +15,23 @@ var PDFTS = /** @class */ (function () {
     PDFTS.prototype.initial = function () {
         var _this = this;
         var loadTask = pdfjs_dist_1.default.getDocument(this.option.url);
-        // console.log(loadTask);
-        loadTask.onProgress = function (loadEvent) {
-            var progress = loadEvent.loaded / loadEvent.total * 100;
-            progress = Number(progress.toFixed(2));
-            progress = progress >= 100 ? 100 : progress;
-            console.log('loading: ', progress, '%');
-        };
         loadTask.promise.then(function (pdf) {
             _this.pdfDoc = pdf;
             _this.initAfterLoad();
         });
         return new Promise(function (resolve, reject) {
+            var timer = 0;
             loadTask.onProgress = function (loadEvent) {
                 var progress = loadEvent.loaded / loadEvent.total * 100;
                 progress = Number(progress.toFixed(2));
                 progress = progress >= 100 ? 100 : progress;
                 console.log('loading: ', progress, '%');
-                if (progress === 100) {
-                    resolve('load completed');
-                }
+                clearInterval(timer);
+                timer = setInterval(function () {
+                    if (progress === 100 && _this.pdfDoc) {
+                        resolve('load completed');
+                    }
+                }, 50);
             };
         });
     };
