@@ -1,6 +1,6 @@
 import PDFJS from 'pdfjs-dist';
 
-import { Renderer, FactoryOptions, FindCtrl } from './core';
+import { Renderer, FactoryOptions, FindCtrl } from './src/core';
 
 export class PDFTS {
   public option: FactoryOptions;
