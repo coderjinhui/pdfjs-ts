@@ -1,10 +1,14 @@
-export interface ISearchInput {
-    q: string;
+import { ITextLayer } from '../interface';
+export interface ISearchOption {
     start?: number;
+    ignoreCase?: boolean;
+    end?: number;
 }
-export interface ISearchInputMultiple {
+export interface ISearchInput extends ISearchOption {
+    q: string;
+}
+export interface ISearchInputMultiple extends ISearchOption {
     keywords: string[];
-    start?: number;
 }
 export declare class FindCtrl {
     findController: any;
@@ -21,6 +25,7 @@ export declare class FindCtrl {
     private cleanSearch;
     initial(): void;
     private appendPageContent;
+    static formatPageContent(content: ITextLayer): string;
     search(option: ISearchInput | ISearchInputMultiple): {
         total: number;
         pageDistribution: any[];

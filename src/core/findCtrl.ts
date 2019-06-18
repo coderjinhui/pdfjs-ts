@@ -1,13 +1,18 @@
 import FastScanner from 'fastscan';
 
-export interface ISearchInput {
-  q: string;
+import { ITextLayer } from '../interface';
+
+export interface ISearchOption {
   start?: number;
+  ignoreCase?: boolean;
+  end?: number;
+}
+export interface ISearchInput extends ISearchOption {
+  q: string;
 }
 
-export interface ISearchInputMultiple {
+export interface ISearchInputMultiple extends ISearchOption {
   keywords: string[];
-  start?: number;
 }
 
 export class FindCtrl {
@@ -51,19 +56,24 @@ export class FindCtrl {
   private appendPageContent(pageIndex: number) {
     this.pdfDoc.getPage(pageIndex + 1)
       .then((page: any) => page.getTextContent())
-      .then((textCont: any) => {
-        let text = '';
-        if (textCont) {
-          text = textCont.items.reduce((accumulator: any, currentValue: any) => {
-            return accumulator + ' ' + currentValue.str;
-          }, '');
-        }
-        if (text) {
-          // 聚合每页文本
-          text = text.trim();
-          this.addContext(pageIndex, text);
-        }
+      .then((textCont: ITextLayer) => {
+        const text = FindCtrl.formatPageContent(textCont)
+        this.addContext(pageIndex, text);
+        console.log('append content...')
       });
+  }
+  static formatPageContent(content: ITextLayer) {
+    let text = '';
+    if (content) {
+      text = content.items.reduce((accumulator: any, currentValue: any) => {
+        return accumulator + ' ' + currentValue.str;
+      }, '');
+    }
+    if (text) {
+      // 聚合每页文本
+      text = text.trim();
+    }
+    return text;
   }
 
   search(option: ISearchInput | ISearchInputMultiple) {
@@ -96,7 +106,7 @@ export class FindCtrl {
     for (let i = start; i < this.pdfText.length; i++) {
       const result = scanner.search(this.pdfText[i]);
       this.searchPage[i] = 0;
-      if (result.length) {
+      if (result && result.length) {
         if (this.keywordSourceHTMLlength !== this.keywordSourceHTML.length) {
           this.prepareRenderWord(i);
         }
@@ -127,7 +137,7 @@ export class FindCtrl {
     for (let i = start; i < this.pdfText.length; i++) {
       const result = scanner.search(this.pdfText[i]);
       this.searchPage[i] = 0;
-      if (result.length) {
+      if (result && result.length) {
         if (this.keywordSourceHTMLlength !== this.keywordSourceHTML.length) {
           this.prepareRenderWord(i);
         }
@@ -158,7 +168,7 @@ export class FindCtrl {
     const pageDoms = document.querySelectorAll(`.page-${pageNumber} .textLayer span`);
     const spanHTML = this.keywordSourceHTML[pageNumber - 1];
     pageDoms.forEach((span, index) => {
-      if (spanHTML) {
+      if (spanHTML && spanHTML[index]) {
         let html = spanHTML[index];
         // highlight selected
         words.forEach(word => {

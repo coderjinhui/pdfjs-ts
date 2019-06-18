@@ -1,4 +1,6 @@
 import { FactoryOptions } from './factory';
+import { FindCtrl } from './findCtrl';
+import { ITextLayer } from '../interface';
 export declare class Renderer {
     private options;
     pdfDoc: any;
@@ -6,6 +8,7 @@ export declare class Renderer {
     pageRendering: boolean;
     pageNumPending: number;
     scale: number;
+    findCtrl: FindCtrl | null;
     constructor(options: FactoryOptions, pdfDoc: any);
     setScale(scale: number): void;
     render(): Promise<void>;
@@ -15,11 +18,11 @@ export declare class Renderer {
     renderPageSync(num: number): Promise<{
         container: HTMLDivElement;
     }>;
-    renderText(container: Element, page: any, viewport: any): void;
-    renderTextSync(container: Element, page: any, viewport: any): Promise<void>;
+    renderText(container: Element, page: any, viewport: any, index: number): void;
+    renderTextSync(container: Element, page: any, viewport: any, index: number): Promise<void>;
+    renderWithSearch(index: number, text: ITextLayer): ITextLayer;
     /**
-   * If another page rendering in progress, waits until the rendering is
-   * finised. Otherwise, executes rendering immediately.
+   * 渲染队列，正在渲染的时候不进行下一个渲染
    */
     queueRenderPage(num: number): void;
     /**

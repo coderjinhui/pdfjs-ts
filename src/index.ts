@@ -26,7 +26,7 @@ export class PDFTS {
     });
     return new Promise((resolve, reject) => {
       let timer = 0;
-      loadTask.onProgress = (loadEvent: any) => {
+      loadTask.onProgress = (loadEvent: ILoadEvent) => {
         let progress = loadEvent.loaded / loadEvent.total * 100;
         progress = Number(progress.toFixed(2));
         progress = progress >= 100 ? 100 : progress;
@@ -45,8 +45,13 @@ export class PDFTS {
     this.renderer = new Renderer(this.option, this.pdfDoc);
   }
   private initFindControl() {
-    this.findCtrl = new FindCtrl(this.pdfDoc);
-    this.findCtrl.initial();
+    if (!this.option.searchWnenRender) {
+      this.findCtrl = new FindCtrl(this.pdfDoc);
+      this.findCtrl.initial();
+    } else {
+      this.findCtrl = this.renderer.findCtrl as FindCtrl;
+    }
+    
   }
   private initAfterLoad() {
     this.initRanderer();

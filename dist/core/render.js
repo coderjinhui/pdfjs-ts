@@ -34,8 +34,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var pdf_viewer_1 = require("pdfjs-dist/web/pdf_viewer");
+var findCtrl_1 = require("./findCtrl");
+var fastscan_1 = __importDefault(require("fastscan"));
 var Renderer = /** @class */ (function () {
     function Renderer(options, pdfDoc) {
         this.options = options;
@@ -45,6 +50,10 @@ var Renderer = /** @class */ (function () {
         this.pageNumPending = -1;
         this.scale = 0.8;
         this.pdfDoc = pdfDoc;
+        this.findCtrl = null;
+        if (options.searchWnenRender) {
+            this.findCtrl = new findCtrl_1.FindCtrl(this.pdfDoc);
+        }
     }
     Renderer.prototype.setScale = function (scale) {
         this.scale = scale;
@@ -123,7 +132,7 @@ var Renderer = /** @class */ (function () {
                     _this.pageNumPending = -1;
                 }
                 if (_this.options.renderText) {
-                    _this.renderText(container, page, viewport);
+                    _this.renderText(container, page, viewport, num - 1);
                 }
             });
         });
@@ -167,7 +176,7 @@ var Renderer = /** @class */ (function () {
                             this.pageNumPending = -1;
                         }
                         if (!this.options.renderText) return [3 /*break*/, 4];
-                        return [4 /*yield*/, this.renderTextSync(container, page, viewport)];
+                        return [4 /*yield*/, this.renderTextSync(container, page, viewport, num - 1)];
                     case 3:
                         _a.sent();
                         _a.label = 4;
@@ -178,7 +187,8 @@ var Renderer = /** @class */ (function () {
             });
         });
     };
-    Renderer.prototype.renderText = function (container, page, viewport) {
+    Renderer.prototype.renderText = function (container, page, viewport, index) {
+        var _this = this;
         page.getTextContent().then(function (textContent) {
             // 创建文本图层div
             var textLayerDiv = document.createElement('div');
@@ -190,11 +200,14 @@ var Renderer = /** @class */ (function () {
                 pageIndex: page.pageIndex,
                 viewport: viewport
             });
+            if (_this.options.searchWnenRender) {
+                textContent = _this.renderWithSearch(index, textContent);
+            }
             textLayer.setTextContent(textContent);
             textLayer.render();
         });
     };
-    Renderer.prototype.renderTextSync = function (container, page, viewport) {
+    Renderer.prototype.renderTextSync = function (container, page, viewport, index) {
         return __awaiter(this, void 0, void 0, function () {
             var textContent, textLayerDiv, textLayer;
             return __generator(this, function (_a) {
@@ -213,6 +226,9 @@ var Renderer = /** @class */ (function () {
                                 pageIndex: page.pageIndex,
                                 viewport: viewport
                             });
+                            if (this.options.searchWnenRender) {
+                                textContent = this.renderWithSearch(index, textContent);
+                            }
                             textLayer.setTextContent(textContent);
                             textLayer.render();
                         }
@@ -221,9 +237,34 @@ var Renderer = /** @class */ (function () {
             });
         });
     };
+    // 渲染同时进行关键词搜索
+    Renderer.prototype.renderWithSearch = function (index, text) {
+        var textContent = JSON.parse(JSON.stringify(text));
+        var search = this.options.searchWnenRender;
+        var content = findCtrl_1.FindCtrl.formatPageContent(textContent) || '';
+        var scanner;
+        var word = [];
+        if (search instanceof Array) {
+            word = search;
+        }
+        else if (search instanceof String) {
+            word = [search];
+        }
+        scanner = new fastscan_1.default(word);
+        var result = scanner.search(content);
+        if (result.length) {
+            // 有结果
+            textContent.items.forEach(function (item) {
+                word.forEach(function (key) {
+                    item.str = item.str.replace(new RegExp(key, 'g'), "<strong class=\"pdfkeywords highlight\">" + key + "</strong>");
+                });
+            });
+        }
+        this.findCtrl.addContext(index, content);
+        return textContent;
+    };
     /**
-   * If another page rendering in progress, waits until the rendering is
-   * finised. Otherwise, executes rendering immediately.
+   * 渲染队列，正在渲染的时候不进行下一个渲染
    */
     Renderer.prototype.queueRenderPage = function (num) {
         if (this.pageRendering) {

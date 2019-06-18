@@ -1,15 +1,22 @@
 import { TextLayerBuilder } from 'pdfjs-dist/web/pdf_viewer';
 import { FactoryOptions } from './factory';
-
+import { FindCtrl } from './findCtrl';
+import { ITextLayer } from '../interface';
+import FastScanner from 'fastscan';
 export class Renderer {
   pdfDoc:any = null;
   pageNum = 1;
   pageRendering = false;
   pageNumPending: number = -1;
   scale = 0.8;
+  findCtrl: FindCtrl | null;
 
   constructor(private options: FactoryOptions, pdfDoc: any) {
     this.pdfDoc = pdfDoc;
+    this.findCtrl = null;
+    if (options.searchWnenRender) {
+      this.findCtrl = new FindCtrl(this.pdfDoc);
+    }
   }
 
   setScale(scale: number) {
@@ -74,7 +81,7 @@ export class Renderer {
           this.pageNumPending = -1;
         }
         if (this.options.renderText) {
-          this.renderText(container, page, viewport);
+          this.renderText(container, page, viewport, num - 1);
         }
       });
     });
@@ -111,7 +118,7 @@ export class Renderer {
         this.pageNumPending = -1;
       }
       if (this.options.renderText) {
-        await this.renderTextSync(container, page, viewport);
+        await this.renderTextSync(container, page, viewport, num - 1);
       }
     }
     return {
@@ -119,8 +126,8 @@ export class Renderer {
     };
   }
 
-  renderText(container: Element, page: any, viewport: any) {
-    page.getTextContent().then((textContent: any) => {
+  renderText(container: Element, page: any, viewport: any, index: number) {
+    page.getTextContent().then((textContent: ITextLayer) => {
       // 创建文本图层div
       const textLayerDiv = document.createElement('div');
       textLayerDiv.setAttribute('class', 'textLayer');
@@ -131,13 +138,16 @@ export class Renderer {
           pageIndex: page.pageIndex,
           viewport: viewport
       });
+      if (this.options.searchWnenRender) {
+        textContent = this.renderWithSearch(index, textContent);
+      }
       textLayer.setTextContent(textContent);
       textLayer.render();
     });
   }
 
-  async renderTextSync(container: Element, page: any, viewport: any) {
-    const textContent = await page.getTextContent();
+  async renderTextSync(container: Element, page: any, viewport: any, index: number) {
+    let textContent: ITextLayer = await page.getTextContent();
     // console.log(textContent.items[0], textContent.styles);
     if (textContent) {
       // 创建文本图层div
@@ -150,14 +160,41 @@ export class Renderer {
           pageIndex: page.pageIndex,
           viewport: viewport
       });
+      if (this.options.searchWnenRender) {
+        textContent = this.renderWithSearch(index, textContent);
+      }
       textLayer.setTextContent(textContent);
       textLayer.render();
     }
   }
+  // 渲染同时进行关键词搜索
+  renderWithSearch(index: number, text: ITextLayer): ITextLayer {
+    const textContent: ITextLayer = JSON.parse(JSON.stringify(text));
+    const search: any = this.options.searchWnenRender;
+    const content = FindCtrl.formatPageContent(textContent) || '';
+    let scanner: any;
+    let word: any[] = [];
+    if (search instanceof Array) {
+      word = search;
+    } else if (search instanceof String) {
+      word = [search];
+    }
+    scanner = new FastScanner(word);
+    const result = scanner.search(content);
+    if (result.length) {
+      // 有结果
+      textContent.items.forEach(item => {
+        word.forEach(key => {
+          item.str = item.str.replace(new RegExp(key, 'g'), `<strong class="pdfkeywords highlight">${key}</strong>`);
+        })
+      })
+    }
+    this.findCtrl!.addContext(index, content);
+    return textContent;
+  }
 
   /**
- * If another page rendering in progress, waits until the rendering is
- * finised. Otherwise, executes rendering immediately.
+ * 渲染队列，正在渲染的时候不进行下一个渲染
  */
   queueRenderPage(num: number) {
     if (this.pageRendering) {

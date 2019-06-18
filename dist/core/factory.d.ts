@@ -6,6 +6,7 @@ export interface IFactoryOptions {
     renderText?: Boolean;
     thumbnailContainer?: string | HTMLElement | Element;
     enableWebGL?: boolean;
+    searchWnenRender?: string | string[];
     [key: string]: any;
 }
 export declare class FactoryOptions {
@@ -16,5 +17,6 @@ export declare class FactoryOptions {
     renderText?: Boolean;
     thumbnailContainer?: string | HTMLElement | Element;
     enableWebGL?: boolean;
+    searchWnenRender?: string | string[];
     constructor(option: IFactoryOptions);
 }

@@ -44,18 +44,23 @@ var FindCtrl = /** @class */ (function () {
         this.pdfDoc.getPage(pageIndex + 1)
             .then(function (page) { return page.getTextContent(); })
             .then(function (textCont) {
-            var text = '';
-            if (textCont) {
-                text = textCont.items.reduce(function (accumulator, currentValue) {
-                    return accumulator + ' ' + currentValue.str;
-                }, '');
-            }
-            if (text) {
-                // 聚合每页文本
-                text = text.trim();
-                _this.addContext(pageIndex, text);
-            }
+            var text = FindCtrl.formatPageContent(textCont);
+            _this.addContext(pageIndex, text);
+            console.log('append content...');
         });
+    };
+    FindCtrl.formatPageContent = function (content) {
+        var text = '';
+        if (content) {
+            text = content.items.reduce(function (accumulator, currentValue) {
+                return accumulator + ' ' + currentValue.str;
+            }, '');
+        }
+        if (text) {
+            // 聚合每页文本
+            text = text.trim();
+        }
+        return text;
     };
     FindCtrl.prototype.search = function (option) {
         this.cleanSearch();
@@ -87,7 +92,7 @@ var FindCtrl = /** @class */ (function () {
         var _loop_1 = function (i) {
             var result = scanner.search(this_1.pdfText[i]);
             this_1.searchPage[i] = 0;
-            if (result.length) {
+            if (result && result.length) {
                 if (this_1.keywordSourceHTMLlength !== this_1.keywordSourceHTML.length) {
                     this_1.prepareRenderWord(i);
                 }
@@ -122,7 +127,7 @@ var FindCtrl = /** @class */ (function () {
         var _loop_2 = function (i) {
             var result = scanner.search(this_2.pdfText[i]);
             this_2.searchPage[i] = 0;
-            if (result.length) {
+            if (result && result.length) {
                 if (this_2.keywordSourceHTMLlength !== this_2.keywordSourceHTML.length) {
                     this_2.prepareRenderWord(i);
                 }
@@ -157,7 +162,7 @@ var FindCtrl = /** @class */ (function () {
         var pageDoms = document.querySelectorAll(".page-" + pageNumber + " .textLayer span");
         var spanHTML = this.keywordSourceHTML[pageNumber - 1];
         pageDoms.forEach(function (span, index) {
-            if (spanHTML) {
+            if (spanHTML && spanHTML[index]) {
                 var html_1 = spanHTML[index];
                 // highlight selected
                 words.forEach(function (word) {

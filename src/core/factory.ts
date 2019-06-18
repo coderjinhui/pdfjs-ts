@@ -6,6 +6,7 @@ export interface IFactoryOptions {
   renderText?: Boolean;
   thumbnailContainer?: string | HTMLElement | Element;
   enableWebGL?: boolean;
+  searchWnenRender?: string | string[];
   [key: string]: any;
 }
 
@@ -17,6 +18,7 @@ export class FactoryOptions {
   renderText?: Boolean = false;
   thumbnailContainer?: string | HTMLElement | Element;
   enableWebGL?: boolean;
+  searchWnenRender?: string | string[];
   constructor(option: IFactoryOptions) {
     Object.keys(option).forEach((key: keyof IFactoryOptions) => {
       const _this: IFactoryOptions = this;
