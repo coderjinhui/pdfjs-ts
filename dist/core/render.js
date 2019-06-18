@@ -51,7 +51,7 @@ var Renderer = /** @class */ (function () {
         this.scale = 0.8;
         this.pdfDoc = pdfDoc;
         this.findCtrl = null;
-        if (options.searchWnenRender) {
+        if (options.searchWhenRender) {
             this.findCtrl = new findCtrl_1.FindCtrl(this.pdfDoc);
         }
     }
@@ -200,8 +200,10 @@ var Renderer = /** @class */ (function () {
                 pageIndex: page.pageIndex,
                 viewport: viewport
             });
-            if (_this.options.searchWnenRender) {
+            if (_this.options.searchWhenRender) {
+                console.log('yes has search when');
                 textContent = _this.renderWithSearch(index, textContent);
+                console.log(textContent);
             }
             textLayer.setTextContent(textContent);
             textLayer.render();
@@ -224,9 +226,9 @@ var Renderer = /** @class */ (function () {
                             textLayer = new pdf_viewer_1.TextLayerBuilder({
                                 textLayerDiv: textLayerDiv,
                                 pageIndex: page.pageIndex,
-                                viewport: viewport
+                                viewport: viewport,
                             });
-                            if (this.options.searchWnenRender) {
+                            if (this.options.searchWhenRender) {
                                 textContent = this.renderWithSearch(index, textContent);
                             }
                             textLayer.setTextContent(textContent);
@@ -240,16 +242,17 @@ var Renderer = /** @class */ (function () {
     // 渲染同时进行关键词搜索
     Renderer.prototype.renderWithSearch = function (index, text) {
         var textContent = JSON.parse(JSON.stringify(text));
-        var search = this.options.searchWnenRender;
+        var search = this.options.searchWhenRender;
         var content = findCtrl_1.FindCtrl.formatPageContent(textContent) || '';
         var scanner;
         var word = [];
         if (search instanceof Array) {
             word = search;
         }
-        else if (search instanceof String) {
+        else if (typeof search === 'string') {
             word = [search];
         }
+        console.log('search word', word);
         scanner = new fastscan_1.default(word);
         var result = scanner.search(content);
         if (result.length) {

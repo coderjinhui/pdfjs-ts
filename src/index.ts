@@ -45,7 +45,7 @@ export class PDFTS {
     this.renderer = new Renderer(this.option, this.pdfDoc);
   }
   private initFindControl() {
-    if (!this.option.searchWnenRender) {
+    if (!this.option.searchWhenRender) {
       this.findCtrl = new FindCtrl(this.pdfDoc);
       this.findCtrl.initial();
     } else {

@@ -39,7 +39,7 @@ var PDFTS = /** @class */ (function () {
         this.renderer = new core_1.Renderer(this.option, this.pdfDoc);
     };
     PDFTS.prototype.initFindControl = function () {
-        if (!this.option.searchWnenRender) {
+        if (!this.option.searchWhenRender) {
             this.findCtrl = new core_1.FindCtrl(this.pdfDoc);
             this.findCtrl.initial();
         }
