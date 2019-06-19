@@ -1,4 +1,5 @@
-import { Renderer, FactoryOptions, FindCtrl } from './core';
+import { Renderer, FactoryOptions } from './core';
+import { FindCtrl } from './search/findCtrl';
 export declare class PDFTS {
     option: FactoryOptions;
     renderer: Renderer;

@@ -1,8 +1,10 @@
-import { TextLayerBuilder } from 'pdfjs-dist/web/pdf_viewer';
-import { FactoryOptions } from './factory';
-import { FindCtrl } from './findCtrl';
-import { ITextLayer } from '../interface';
 import FastScanner from 'fastscan';
+
+import { FactoryOptions } from './factory';
+import { FindCtrl } from '../search/findCtrl';
+import { ITextLayer } from '../interface';
+import { r, rs} from './renderer';
+import { progressEvent } from './events/progressEvent';
 
 export class Renderer {
   pdfDoc:any = null;
@@ -11,12 +13,15 @@ export class Renderer {
   pageNumPending: number = -1;
   scale = 0.8;
   findCtrl: FindCtrl | null;
+  // for progress
+  loaded: number = 0;
+
 
   constructor(private options: FactoryOptions, pdfDoc: any) {
     this.pdfDoc = pdfDoc;
     this.findCtrl = null;
     if (options.searchWhenRender) {
-      this.findCtrl = new FindCtrl(this.pdfDoc);
+      this.findCtrl = FindCtrl.getInstance(this.pdfDoc);
     }
   }
 
@@ -24,18 +29,20 @@ export class Renderer {
     this.scale = scale;
   }
 
+  // 直接渲染
   async render() {
+    // 给定容器，直接渲染到指定容器中
     if (!this.options.container) {
       throw new Error('must give a container in options!');
     }
     const frag = document.createDocumentFragment();
     for (let i = 0; i < this.pdfDoc.numPages; i++) {
       if (i < 6) {
-        const cv = await this.renderPageSync(i + 1);
+        const cv = await this.renderPageSync(i + 1, true);
         cv.container.removeAttribute('hidden');
         this.options.container.appendChild(cv.container);
       } else {
-        const cv = this.renderPage(i + 1);
+        const cv = this.renderPage(i + 1, true);
         cv.container.setAttribute('hidden', 'hidden');
         frag.appendChild(cv.container);
       }
@@ -45,132 +52,46 @@ export class Renderer {
     }
     this.options.container.appendChild(frag);
   }
-  renderPage(num: number) {
+
+  renderPage(num: number, needProgress=false) {
+    // 异步渲染pdf到canvas，先将canvas等标签append到页面后渲染
     this.pageRendering = true;
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d', {alpha: false});
-    const container = document.createElement('div');
-
-    container.setAttribute('class', 'page-' + num);
-    container.setAttribute('style', 'position: relative');
-
-    this.pdfDoc.getPage(num).then((page: any) => {
-      const viewport = page.getViewport({scale: this.scale});
-
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-      container.appendChild(canvas);
-
-
-      // Render PDF page into canvas context
-      const renderContext = {
-        canvasContext: ctx,
-        viewport: viewport,
-        enableWebGL: true
-      };
-      const renderTask = page.render(renderContext);
-      renderTask.onContinue = (cont: any) => {
-        cont();
-      };
-      // Wait for rendering to finish
-      renderTask.promise.then(() => {
-        this.pageRendering = false;
-        container.removeAttribute('hidden');
-        if (this.pageNumPending !== -1) {
-          // New page rendering is pending
-          this.renderPage(this.pageNumPending);
-          this.pageNumPending = -1;
-        }
-        if (this.options.renderText) {
-          this.renderText(container, page, viewport, num - 1);
-        }
-      });
-    });
-    return {
-      container
-    };
-  }
-
-  async renderPageSync(num: number) {
-    this.pageRendering = true;
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d', {alpha: false});
-    const container = document.createElement('div');
-    container.setAttribute('class', 'page-' + num);
-    container.setAttribute('style', 'position: relative');
-    const page = await this.pdfDoc.getPage(num);
-    if (page) {
-      const viewport = page.getViewport({scale: this.scale});
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-      container.appendChild(canvas);
-      // Render PDF page into canvas context
-      const renderContext = {
-        canvasContext: ctx,
-        viewport: viewport,
-        enableWebGL: true
-      };
-      await page.render(renderContext).promise;
+    const result = r.renderPage(this.pdfDoc, num, this.scale, this.options, () => {
       this.pageRendering = false;
-      container.removeAttribute('hidden');
+      if (needProgress) {
+        this.loaded++;
+        this.emitProgress();
+      }
       if (this.pageNumPending !== -1) {
         // New page rendering is pending
         this.renderPage(this.pageNumPending);
         this.pageNumPending = -1;
       }
-      if (this.options.renderText) {
-        await this.renderTextSync(container, page, viewport, num - 1);
-      }
-    }
-    return {
-      container
-    };
-  }
-
-  renderText(container: Element, page: any, viewport: any, index: number) {
-    page.getTextContent().then((textContent: ITextLayer) => {
-      // 创建文本图层div
-      const textLayerDiv = document.createElement('div');
-      textLayerDiv.setAttribute('class', 'textLayer');
-      // 将文本图层div添加至每页pdf的div中
-      container.appendChild(textLayerDiv);
-      const textLayer = new TextLayerBuilder({
-          textLayerDiv: textLayerDiv,
-          pageIndex: page.pageIndex,
-          viewport: viewport
-      });
-      if (this.options.searchWhenRender) {
-        console.log('yes has search when')
-        textContent = this.renderWithSearch(index, textContent, textLayerDiv);
-        console.log(textContent);
-      }
-      textLayer.setTextContent(textContent);
-      textLayer.render();
     });
+    return result;
   }
 
-  async renderTextSync(container: Element, page: any, viewport: any, index: number) {
-    let textContent: ITextLayer = await page.getTextContent();
-    // console.log(textContent.items[0], textContent.styles);
-    if (textContent) {
-      // 创建文本图层div
-      const textLayerDiv = document.createElement('div');
-      textLayerDiv.setAttribute('class', 'textLayer');
-      const textLayer = new TextLayerBuilder({
-          textLayerDiv: textLayerDiv,
-          pageIndex: page.pageIndex,
-          viewport: viewport,
-      });
-      textLayer.setTextContent(textContent);
-      textLayer.render();
-      if (this.options.searchWhenRender) {
-        textLayerDiv.appendChild;
-        textContent = this.renderWithSearch(index, textContent, textLayerDiv);
-      }
-      // 将文本图层div添加至每页pdf的div中
-      container.appendChild(textLayerDiv);
+
+  async renderPageSync(num: number, needProgress=false) {
+    // 同步渲染，将需要的全部渲染之后返回一个DOM，根据自己需要把容器插入任何地方
+    this.pageRendering = true;
+    const result = await rs.renderPageSync(this.pdfDoc, num, this.scale, this.options);
+    this.pageRendering = false;
+    if (needProgress) {
+      this.loaded++;
+      this.emitProgress();
     }
+    return result;
   }
+
+  emitProgress() {
+    progressEvent.emit('render', {
+      loaded: this.loaded,
+      total: this.pdfDoc.numPages,
+      progress: this.loaded/this.pdfDoc.numPages*100
+    })
+  }
+
   // 渲染同时进行关键词搜索
   renderWithSearch(index: number, text: ITextLayer, textLayerDiv: Element): ITextLayer {
     const textContent: ITextLayer = JSON.parse(JSON.stringify(text));
@@ -199,35 +120,36 @@ export class Renderer {
     return textContent;
   }
 
-  /**
- * 渲染队列，正在渲染的时候不进行下一个渲染
- */
-  queueRenderPage(num: number) {
-    if (this.pageRendering) {
-      this.pageNumPending = num;
-    } else {
-      this.renderPage(num);
-    }
-  }
-  /**
-   * Displays previous page.
-   */
-  onPrevPage() {
-    if (this.pageNum <= 1) {
-      return;
-    }
-    this.pageNum--;
-    this.queueRenderPage(this.pageNum);
-  }
+//   /**
+//  * 渲染队列，正在渲染的时候不进行下一个渲染
+//  */
+//   queueRenderPage(num: number) {
+//     if (this.pageRendering) {
+//       this.pageNumPending = num;
+//     } else {
+//       this.renderPage(num);
+//     }
+//   }
+//   /**
+//    * Displays previous page.
+//    */
+//   onPrevPage() {
+//     if (this.pageNum <= 1) {
+//       return;
+//     }
+//     this.pageNum--;
+//     this.queueRenderPage(this.pageNum);
+//   }
 
-  /**
-   * Displays next page.
-   */
-  onNextPage() {
-    if (this.pageNum >= this.pdfDoc.numPages) {
-      return;
-    }
-    this.pageNum++;
-    this.queueRenderPage(this.pageNum);
-  }
+//   /**
+//    * Displays next page.
+//    */
+//   onNextPage() {
+//     if (this.pageNum >= this.pdfDoc.numPages) {
+//       return;
+//     }
+//     this.pageNum++;
+//     this.queueRenderPage(this.pageNum);
+//   }
+
 }

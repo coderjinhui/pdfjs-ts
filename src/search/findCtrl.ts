@@ -25,16 +25,42 @@ export class FindCtrl {
   // 按顺序存储每个搜索词出现的pageNumber
   private searchResult: any = [];
   // 按顺序存储每个搜索关键词的DOM
-  private searchContenrDOM: Element[] = [];
+  private searchContentDOM: Element[] = [];
   // 存储当前的搜索高亮index
   private currentWordIndex = 0;
   // 存储keyword的source
   private keywordSourceHTML: any[][] = [];
   // 存储keywordSourceHTML的长度
   private keywordSourceHTMLlength = -1;
-  constructor(pdfDoc: any) {
+  loaded = 0;
+  static instance: FindCtrl;
+  private constructor(pdfDoc: any) {
     this.pdfDoc = pdfDoc;
   }
+
+  static getInstance(pdfDoc?: any): FindCtrl {
+    if (!pdfDoc && !FindCtrl.instance) {
+      throw new Error('please init pdf doc when use FindCtrl class');
+    }
+    if (!FindCtrl.instance) {
+      FindCtrl.instance = new FindCtrl(pdfDoc)
+    }
+    return FindCtrl.instance;
+  }
+  static formatPageContent(content: ITextLayer) {
+    let text = '';
+    if (content) {
+      text = content.items.reduce((accumulator: any, currentValue: any) => {
+        return accumulator + ' ' + currentValue.str;
+      }, '');
+    }
+    if (text) {
+      // 聚合每页文本
+      text = text.trim();
+    }
+    return text;
+  }
+
   addContext(index: number, context: string) {
     this.pdfText[index] = context;
   }
@@ -42,10 +68,11 @@ export class FindCtrl {
   private cleanSearch() {
     this.searchPage = [];
     this.searchResult = [];
-    this.searchContenrDOM = [];
+    this.searchContentDOM = [];
     this.currentWordIndex = 0;
   }
   initial() {
+    this.pdfText = [];
     const num = this.pdfDoc.numPages;
     // console.log('hhhhh', this.pdfDoc);
     for (let i = 0; i < num; i++) {
@@ -61,19 +88,6 @@ export class FindCtrl {
         this.addContext(pageIndex, text);
         console.log('append content...')
       });
-  }
-  static formatPageContent(content: ITextLayer) {
-    let text = '';
-    if (content) {
-      text = content.items.reduce((accumulator: any, currentValue: any) => {
-        return accumulator + ' ' + currentValue.str;
-      }, '');
-    }
-    if (text) {
-      // 聚合每页文本
-      text = text.trim();
-    }
-    return text;
   }
 
   search(option: ISearchInput | ISearchInputMultiple) {
@@ -96,6 +110,7 @@ export class FindCtrl {
 
   private singleSearch(option: ISearchInput) {
     // 开始搜索
+    this.loaded = 0;
     const word = [option.q];
     const scanner = new FastScanner(word);
     let start = 0;
@@ -117,6 +132,7 @@ export class FindCtrl {
           this.searchResult.push(i + 1);
         });
       }
+      this.loaded ++;
     }
     this.keywordSourceHTMLlength = this.keywordSourceHTML.length;
     return {
@@ -127,6 +143,7 @@ export class FindCtrl {
   }
 
   private multipleSearch(option: ISearchInputMultiple) {
+    this.loaded = 0;
     const word = option.keywords;
     const scanner = new FastScanner(word);
     let start = 0;
@@ -148,6 +165,7 @@ export class FindCtrl {
           this.searchResult.push(i + 1);
         });
       }
+      this.loaded ++;
     }
     this.keywordSourceHTMLlength = this.keywordSourceHTML.length;
     return {
@@ -181,12 +199,12 @@ export class FindCtrl {
   }
 
   renderSelectedKeyword(lastIndex: number, currentIndex: number) {
-    if (!this.searchContenrDOM.length) {
+    if (!this.searchContentDOM.length) {
       const dom = document.querySelectorAll('.pdfkeywords.highlight');
-      this.searchContenrDOM = Array.from(dom);
+      this.searchContentDOM = Array.from(dom);
     }
-    this.searchContenrDOM[lastIndex].className = 'pdfkeywords highlight';
-    this.searchContenrDOM[currentIndex].className = 'pdfkeywords highlight selected';
+    this.searchContentDOM[lastIndex].className = 'pdfkeywords highlight';
+    this.searchContentDOM[currentIndex].className = 'pdfkeywords highlight selected';
     return {
       pageNumber: this.searchResult[currentIndex]
     };
@@ -195,7 +213,13 @@ export class FindCtrl {
   renderNext() {
     const last = this.currentWordIndex;
     this.currentWordIndex++;
-    if (this.currentWordIndex >= this.searchResult.length) {
+    let len = 0;
+    for (let i = 0; i < this.searchPage.length; i++) {
+      if (this.searchPage[i]) {
+        len+=this.searchPage[i];
+      }
+    }
+    if (this.currentWordIndex >= len) {
       this.currentWordIndex = 0;
     }
     const r = this.renderSelectedKeyword(last, this.currentWordIndex);
@@ -211,5 +235,34 @@ export class FindCtrl {
     const r = this.renderSelectedKeyword(last, this.currentWordIndex);
     return r;
   }
+
+
+  initSearchPageContent(index: number, numInPage: number, content: string, spans: Element[]) {
+    this.addContext(index, content);
+    this.searchPage[index] = numInPage;
+    this.keywordSourceHTML[index] = [];
+    spans.forEach(span => {
+      this.keywordSourceHTML[index].push(span.innerHTML);
+    })
+  }
+  renderKeywordInDOM(pageDoms: any[], index: number, words: string[]) {
+    const spanHTML = this.keywordSourceHTML[index];
+    pageDoms.forEach((span, i) => {
+      if (spanHTML && spanHTML[i]) {
+        let html = spanHTML[i];
+        // highlight selected
+        words.forEach(word => {
+          html = html.replace(new RegExp(word, 'g'), `<strong class="pdfkeywords highlight">${word}</strong>`);
+        });
+        span.innerHTML = html;
+      }
+    });
+    this.keywordSourceHTMLlength = this.keywordSourceHTML.length;
+  }
+
+  getTotalPage() {
+    return this.pdfDoc.numPages;
+  }
+
 
 }

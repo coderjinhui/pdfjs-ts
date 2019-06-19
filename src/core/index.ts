@@ -1,3 +1,3 @@
 export * from './factory';
 export * from './render';
-export * from './findCtrl';
+// export * from '../search/findCtrl';

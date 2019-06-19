@@ -5,4 +5,4 @@ function __export(m) {
 Object.defineProperty(exports, "__esModule", { value: true });
 __export(require("./factory"));
 __export(require("./render"));
-__export(require("./findCtrl"));
+// export * from '../search/findCtrl';

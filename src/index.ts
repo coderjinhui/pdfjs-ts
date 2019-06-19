@@ -1,6 +1,8 @@
 import PDFJS from 'pdfjs-dist';
 
-import { Renderer, FactoryOptions, FindCtrl } from './core';
+import { Renderer, FactoryOptions } from './core';
+import { FindCtrl } from './search/findCtrl';
+import { progressEvent } from './core/events/progressEvent';
 
 import { ILoadEvent } from './interface'
 
@@ -25,12 +27,17 @@ export class PDFTS {
       this.initAfterLoad();
     });
     return new Promise((resolve, reject) => {
-      let timer = 0;
+      let timer: any = null;
       loadTask.onProgress = (loadEvent: ILoadEvent) => {
         let progress = loadEvent.loaded / loadEvent.total * 100;
         progress = Number(progress.toFixed(2));
         progress = progress >= 100 ? 100 : progress;
         console.log('loading: ', progress, '%');
+        progressEvent.emit('load', {
+          loaded: loadEvent.loaded,
+          total: loadEvent.total,
+          progress: progress
+        })
         clearInterval(timer);
         timer = setInterval(() => {
           if (progress === 100 && this.pdfDoc) {
@@ -46,7 +53,7 @@ export class PDFTS {
   }
   private initFindControl() {
     if (!this.option.searchWhenRender) {
-      this.findCtrl = new FindCtrl(this.pdfDoc);
+      this.findCtrl = FindCtrl.getInstance(this.pdfDoc);
       this.findCtrl.initial();
     } else {
       this.findCtrl = this.renderer.findCtrl as FindCtrl;

@@ -5,6 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var pdfjs_dist_1 = __importDefault(require("pdfjs-dist"));
 var core_1 = require("./core");
+var findCtrl_1 = require("./search/findCtrl");
+var progressEvent_1 = require("./core/events/progressEvent");
 var PDFTS = /** @class */ (function () {
     function PDFTS(option) {
         // pdf 相关属性
@@ -20,12 +22,17 @@ var PDFTS = /** @class */ (function () {
             _this.initAfterLoad();
         });
         return new Promise(function (resolve, reject) {
-            var timer = 0;
+            var timer = null;
             loadTask.onProgress = function (loadEvent) {
                 var progress = loadEvent.loaded / loadEvent.total * 100;
                 progress = Number(progress.toFixed(2));
                 progress = progress >= 100 ? 100 : progress;
                 console.log('loading: ', progress, '%');
+                progressEvent_1.progressEvent.emit('load', {
+                    loaded: loadEvent.loaded,
+                    total: loadEvent.total,
+                    progress: progress
+                });
                 clearInterval(timer);
                 timer = setInterval(function () {
                     if (progress === 100 && _this.pdfDoc) {
@@ -40,7 +47,7 @@ var PDFTS = /** @class */ (function () {
     };
     PDFTS.prototype.initFindControl = function () {
         if (!this.option.searchWhenRender) {
-            this.findCtrl = new core_1.FindCtrl(this.pdfDoc);
+            this.findCtrl = findCtrl_1.FindCtrl.getInstance(this.pdfDoc);
             this.findCtrl.initial();
         }
         else {

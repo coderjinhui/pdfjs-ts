@@ -38,9 +38,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var pdf_viewer_1 = require("pdfjs-dist/web/pdf_viewer");
-var findCtrl_1 = require("./findCtrl");
 var fastscan_1 = __importDefault(require("fastscan"));
+var findCtrl_1 = require("../search/findCtrl");
+var renderer_1 = require("./renderer");
+var progressEvent_1 = require("./events/progressEvent");
 var Renderer = /** @class */ (function () {
     function Renderer(options, pdfDoc) {
         this.options = options;
@@ -49,21 +50,25 @@ var Renderer = /** @class */ (function () {
         this.pageRendering = false;
         this.pageNumPending = -1;
         this.scale = 0.8;
+        // for progress
+        this.loaded = 0;
         this.pdfDoc = pdfDoc;
         this.findCtrl = null;
         if (options.searchWhenRender) {
-            this.findCtrl = new findCtrl_1.FindCtrl(this.pdfDoc);
+            this.findCtrl = findCtrl_1.FindCtrl.getInstance(this.pdfDoc);
         }
     }
     Renderer.prototype.setScale = function (scale) {
         this.scale = scale;
     };
+    // 直接渲染
     Renderer.prototype.render = function () {
         return __awaiter(this, void 0, void 0, function () {
             var frag, i, cv, cv;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        // 给定容器，直接渲染到指定容器中
                         if (!this.options.container) {
                             throw new Error('must give a container in options!');
                         }
@@ -73,14 +78,14 @@ var Renderer = /** @class */ (function () {
                     case 1:
                         if (!(i < this.pdfDoc.numPages)) return [3 /*break*/, 6];
                         if (!(i < 6)) return [3 /*break*/, 3];
-                        return [4 /*yield*/, this.renderPageSync(i + 1)];
+                        return [4 /*yield*/, this.renderPageSync(i + 1, true)];
                     case 2:
                         cv = _a.sent();
                         cv.container.removeAttribute('hidden');
                         this.options.container.appendChild(cv.container);
                         return [3 /*break*/, 4];
                     case 3:
-                        cv = this.renderPage(i + 1);
+                        cv = this.renderPage(i + 1, true);
                         cv.container.setAttribute('hidden', 'hidden');
                         frag.appendChild(cv.container);
                         _a.label = 4;
@@ -99,148 +104,56 @@ var Renderer = /** @class */ (function () {
             });
         });
     };
-    Renderer.prototype.renderPage = function (num) {
+    Renderer.prototype.renderPage = function (num, needProgress) {
         var _this = this;
+        if (needProgress === void 0) { needProgress = false; }
+        // 异步渲染pdf到canvas，先将canvas等标签append到页面后渲染
         this.pageRendering = true;
-        var canvas = document.createElement('canvas');
-        var ctx = canvas.getContext('2d', { alpha: false });
-        var container = document.createElement('div');
-        container.setAttribute('class', 'page-' + num);
-        container.setAttribute('style', 'position: relative');
-        this.pdfDoc.getPage(num).then(function (page) {
-            var viewport = page.getViewport({ scale: _this.scale });
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            container.appendChild(canvas);
-            // Render PDF page into canvas context
-            var renderContext = {
-                canvasContext: ctx,
-                viewport: viewport,
-                enableWebGL: true
-            };
-            var renderTask = page.render(renderContext);
-            renderTask.onContinue = function (cont) {
-                cont();
-            };
-            // Wait for rendering to finish
-            renderTask.promise.then(function () {
-                _this.pageRendering = false;
-                container.removeAttribute('hidden');
-                if (_this.pageNumPending !== -1) {
-                    // New page rendering is pending
-                    _this.renderPage(_this.pageNumPending);
-                    _this.pageNumPending = -1;
-                }
-                if (_this.options.renderText) {
-                    _this.renderText(container, page, viewport, num - 1);
-                }
-            });
+        var result = renderer_1.r.renderPage(this.pdfDoc, num, this.scale, this.options, function () {
+            _this.pageRendering = false;
+            if (needProgress) {
+                _this.loaded++;
+                _this.emitProgress();
+            }
+            if (_this.pageNumPending !== -1) {
+                // New page rendering is pending
+                _this.renderPage(_this.pageNumPending);
+                _this.pageNumPending = -1;
+            }
         });
-        return {
-            container: container
-        };
+        return result;
     };
-    Renderer.prototype.renderPageSync = function (num) {
+    Renderer.prototype.renderPageSync = function (num, needProgress) {
+        if (needProgress === void 0) { needProgress = false; }
         return __awaiter(this, void 0, void 0, function () {
-            var canvas, ctx, container, page, viewport, renderContext;
+            var result;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        // 同步渲染，将需要的全部渲染之后返回一个DOM，根据自己需要把容器插入任何地方
                         this.pageRendering = true;
-                        canvas = document.createElement('canvas');
-                        ctx = canvas.getContext('2d', { alpha: false });
-                        container = document.createElement('div');
-                        container.setAttribute('class', 'page-' + num);
-                        container.setAttribute('style', 'position: relative');
-                        return [4 /*yield*/, this.pdfDoc.getPage(num)];
+                        return [4 /*yield*/, renderer_1.rs.renderPageSync(this.pdfDoc, num, this.scale, this.options)];
                     case 1:
-                        page = _a.sent();
-                        if (!page) return [3 /*break*/, 4];
-                        viewport = page.getViewport({ scale: this.scale });
-                        canvas.height = viewport.height;
-                        canvas.width = viewport.width;
-                        container.appendChild(canvas);
-                        renderContext = {
-                            canvasContext: ctx,
-                            viewport: viewport,
-                            enableWebGL: true
-                        };
-                        return [4 /*yield*/, page.render(renderContext).promise];
-                    case 2:
-                        _a.sent();
+                        result = _a.sent();
                         this.pageRendering = false;
-                        container.removeAttribute('hidden');
-                        if (this.pageNumPending !== -1) {
-                            // New page rendering is pending
-                            this.renderPage(this.pageNumPending);
-                            this.pageNumPending = -1;
+                        if (needProgress) {
+                            this.loaded++;
+                            this.emitProgress();
                         }
-                        if (!this.options.renderText) return [3 /*break*/, 4];
-                        return [4 /*yield*/, this.renderTextSync(container, page, viewport, num - 1)];
-                    case 3:
-                        _a.sent();
-                        _a.label = 4;
-                    case 4: return [2 /*return*/, {
-                            container: container
-                        }];
+                        return [2 /*return*/, result];
                 }
             });
         });
     };
-    Renderer.prototype.renderText = function (container, page, viewport, index) {
-        var _this = this;
-        page.getTextContent().then(function (textContent) {
-            // 创建文本图层div
-            var textLayerDiv = document.createElement('div');
-            textLayerDiv.setAttribute('class', 'textLayer');
-            // 将文本图层div添加至每页pdf的div中
-            container.appendChild(textLayerDiv);
-            var textLayer = new pdf_viewer_1.TextLayerBuilder({
-                textLayerDiv: textLayerDiv,
-                pageIndex: page.pageIndex,
-                viewport: viewport
-            });
-            if (_this.options.searchWhenRender) {
-                console.log('yes has search when');
-                textContent = _this.renderWithSearch(index, textContent);
-                console.log(textContent);
-            }
-            textLayer.setTextContent(textContent);
-            textLayer.render();
-        });
-    };
-    Renderer.prototype.renderTextSync = function (container, page, viewport, index) {
-        return __awaiter(this, void 0, void 0, function () {
-            var textContent, textLayerDiv, textLayer;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, page.getTextContent()];
-                    case 1:
-                        textContent = _a.sent();
-                        // console.log(textContent.items[0], textContent.styles);
-                        if (textContent) {
-                            textLayerDiv = document.createElement('div');
-                            textLayerDiv.setAttribute('class', 'textLayer');
-                            // 将文本图层div添加至每页pdf的div中
-                            container.appendChild(textLayerDiv);
-                            textLayer = new pdf_viewer_1.TextLayerBuilder({
-                                textLayerDiv: textLayerDiv,
-                                pageIndex: page.pageIndex,
-                                viewport: viewport,
-                            });
-                            if (this.options.searchWhenRender) {
-                                textContent = this.renderWithSearch(index, textContent);
-                            }
-                            textLayer.setTextContent(textContent);
-                            textLayer.render();
-                        }
-                        return [2 /*return*/];
-                }
-            });
+    Renderer.prototype.emitProgress = function () {
+        progressEvent_1.progressEvent.emit('render', {
+            loaded: this.loaded,
+            total: this.pdfDoc.numPages,
+            progress: this.loaded / this.pdfDoc.numPages * 100
         });
     };
     // 渲染同时进行关键词搜索
-    Renderer.prototype.renderWithSearch = function (index, text) {
+    Renderer.prototype.renderWithSearch = function (index, text, textLayerDiv) {
         var textContent = JSON.parse(JSON.stringify(text));
         var search = this.options.searchWhenRender;
         var content = findCtrl_1.FindCtrl.formatPageContent(textContent) || '';
@@ -265,37 +178,6 @@ var Renderer = /** @class */ (function () {
         }
         this.findCtrl.addContext(index, content);
         return textContent;
-    };
-    /**
-   * 渲染队列，正在渲染的时候不进行下一个渲染
-   */
-    Renderer.prototype.queueRenderPage = function (num) {
-        if (this.pageRendering) {
-            this.pageNumPending = num;
-        }
-        else {
-            this.renderPage(num);
-        }
-    };
-    /**
-     * Displays previous page.
-     */
-    Renderer.prototype.onPrevPage = function () {
-        if (this.pageNum <= 1) {
-            return;
-        }
-        this.pageNum--;
-        this.queueRenderPage(this.pageNum);
-    };
-    /**
-     * Displays next page.
-     */
-    Renderer.prototype.onNextPage = function () {
-        if (this.pageNum >= this.pdfDoc.numPages) {
-            return;
-        }
-        this.pageNum++;
-        this.queueRenderPage(this.pageNum);
     };
     return Renderer;
 }());

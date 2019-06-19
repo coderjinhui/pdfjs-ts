@@ -5,3 +5,4 @@ export interface ILoadEvent {
 }
 
 export { ITextLayer } from './textlayer';
+export * from './event';
