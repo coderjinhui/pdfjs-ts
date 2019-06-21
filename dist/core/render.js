@@ -34,11 +34,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-var fastscan_1 = __importDefault(require("fastscan"));
 var findCtrl_1 = require("../search/findCtrl");
 var renderer_1 = require("./renderer");
 var progressEvent_1 = require("./events/progressEvent");
@@ -64,7 +60,7 @@ var Renderer = /** @class */ (function () {
     // 直接渲染
     Renderer.prototype.render = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var frag, i, cv, cv;
+            var i, cv;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -72,34 +68,23 @@ var Renderer = /** @class */ (function () {
                         if (!this.options.container) {
                             throw new Error('must give a container in options!');
                         }
-                        frag = document.createDocumentFragment();
                         i = 0;
                         _a.label = 1;
                     case 1:
-                        if (!(i < this.pdfDoc.numPages)) return [3 /*break*/, 6];
-                        if (!(i < 6)) return [3 /*break*/, 3];
+                        if (!(i < this.pdfDoc.numPages)) return [3 /*break*/, 4];
                         return [4 /*yield*/, this.renderPageSync(i + 1, true)];
                     case 2:
                         cv = _a.sent();
                         cv.container.removeAttribute('hidden');
                         this.options.container.appendChild(cv.container);
-                        return [3 /*break*/, 4];
-                    case 3:
-                        cv = this.renderPage(i + 1, true);
-                        cv.container.setAttribute('hidden', 'hidden');
-                        frag.appendChild(cv.container);
-                        _a.label = 4;
-                    case 4:
                         if (!this.options.multiple) {
-                            return [3 /*break*/, 6];
+                            return [3 /*break*/, 4];
                         }
-                        _a.label = 5;
-                    case 5:
+                        _a.label = 3;
+                    case 3:
                         i++;
                         return [3 /*break*/, 1];
-                    case 6:
-                        this.options.container.appendChild(frag);
-                        return [2 /*return*/];
+                    case 4: return [2 /*return*/];
                 }
             });
         });
@@ -151,33 +136,6 @@ var Renderer = /** @class */ (function () {
             total: this.pdfDoc.numPages,
             progress: this.loaded / this.pdfDoc.numPages * 100
         });
-    };
-    // 渲染同时进行关键词搜索
-    Renderer.prototype.renderWithSearch = function (index, text, textLayerDiv) {
-        var textContent = JSON.parse(JSON.stringify(text));
-        var search = this.options.searchWhenRender;
-        var content = findCtrl_1.FindCtrl.formatPageContent(textContent) || '';
-        var scanner;
-        var word = [];
-        if (search instanceof Array) {
-            word = search;
-        }
-        else if (typeof search === 'string') {
-            word = [search];
-        }
-        console.log('search word', word);
-        scanner = new fastscan_1.default(word);
-        var result = scanner.search(content);
-        if (result.length) {
-            // 有结果
-            textContent.items.forEach(function (item) {
-                word.forEach(function (key) {
-                    item.str = item.str.replace(new RegExp(key, 'g'), "<strong class=\"pdfkeywords highlight\">" + key + "</strong>");
-                });
-            });
-        }
-        this.findCtrl.addContext(index, content);
-        return textContent;
     };
     return Renderer;
 }());

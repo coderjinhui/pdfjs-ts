@@ -41,6 +41,15 @@ function searchWhenRender(index: number, options: IFactoryOptions, textLayerDiv:
         }
       })
     })
+    // document.addEventListener('textlayerrendered', (e: any) => {
+    //   const spanDOMs = textLayerDiv.querySelectorAll('span');
+    //   findCtrl.initSearchPageContent(index, result.length, content, spanDOMs as any);
+    //   findCtrl.renderKeywordInDOM(Array.from(spanDOMs), index, word);
+    //   const searchInfo = findCtrl.getSearchInfo();
+    //   if (searchInfo.currentWordIndex === 0) {
+    //     findCtrl.renderSelectedKeyword(0, 0);
+    //   }
+    // }, {once: true});
   }
   findCtrl.loaded ++;
   data.loaded = findCtrl.loaded;
@@ -50,7 +59,7 @@ function searchWhenRender(index: number, options: IFactoryOptions, textLayerDiv:
 }
 
 function observeDOM(DOM: Element, cb: MutationCallback) {
-  let config = { attributes: true, childList: true, subtree: true };
+  let config = { childList: true };
   let observer = new MutationObserver(cb);
   observer.observe(DOM, config);
   return observer;

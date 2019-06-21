@@ -193,8 +193,14 @@ var FindCtrl = /** @class */ (function () {
             var dom = document.querySelectorAll('.pdfkeywords.highlight');
             this.searchContentDOM = Array.from(dom);
         }
-        this.searchContentDOM[lastIndex].className = 'pdfkeywords highlight';
-        this.searchContentDOM[currentIndex].className = 'pdfkeywords highlight selected';
+        if (this.searchContentDOM[lastIndex]) {
+            this.searchContentDOM[lastIndex].className = 'pdfkeywords highlight';
+        }
+        if (this.searchContentDOM[currentIndex]) {
+            this.searchContentDOM[currentIndex].className = 'pdfkeywords highlight selected';
+        }
+        console.log('render key word: ', currentIndex, this.searchContentDOM[currentIndex]);
+        this.currentWordIndex = currentIndex;
         return {
             pageNumber: this.searchResult[currentIndex]
         };
@@ -248,6 +254,14 @@ var FindCtrl = /** @class */ (function () {
     };
     FindCtrl.prototype.getTotalPage = function () {
         return this.pdfDoc.numPages;
+    };
+    FindCtrl.prototype.getSearchInfo = function () {
+        return {
+            currentWordIndex: this.currentWordIndex
+        };
+    };
+    FindCtrl.prototype.setCurrentWordIndex = function (index) {
+        this.currentWordIndex = index;
     };
     return FindCtrl;
 }());

@@ -50,4 +50,8 @@ export declare class FindCtrl {
     initSearchPageContent(index: number, numInPage: number, content: string, spans: Element[]): void;
     renderKeywordInDOM(pageDoms: any[], index: number, words: string[]): void;
     getTotalPage(): any;
+    getSearchInfo(): {
+        currentWordIndex: number;
+    };
+    setCurrentWordIndex(index: number): void;
 }

@@ -18,10 +18,6 @@ searchEvent.addEvent('search', function(e: any) {
     progress: e.detail.loaded/e.detail.total*100
   };
   emit('search_progress', data);
-  if (data.progress >= 100) {
-    const dom = document.querySelectorAll('.pdfkeywords.highlight');
-    dom[0].className = 'pdfkeywords highlight selected'
-  }
 })
 
 export const progressEvent = {

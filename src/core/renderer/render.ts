@@ -1,4 +1,4 @@
-import { TextLayerBuilder } from 'pdfjs-dist/web/pdf_viewer';
+import { TextLayerBuilder,  } from 'pdfjs-dist/web/pdf_viewer';
 
 import { IFactoryOptions } from '../factory';
 import { ITextLayer } from '../../interface';
@@ -12,7 +12,7 @@ function renderPage(pdfDoc: any, num: number, scale: number, option: IFactoryOpt
   const container = document.createElement('div');
 
   container.setAttribute('class', 'page-' + num);
-  container.setAttribute('style', 'position: relative');
+  container.setAttribute('style', 'position: relative; display: none;');
 
   pdfDoc.getPage(num).then((page: any) => {
     const viewport = page.getViewport({scale: scale});
@@ -31,12 +31,13 @@ function renderPage(pdfDoc: any, num: number, scale: number, option: IFactoryOpt
       cont();
     };
     // Wait for rendering to finish
-    renderTask.promise.then(() => {
-      container.removeAttribute('hidden');
-      cb();
+    renderTask.promise.then(async () => {
       if (option.renderText) {
         renderText(container, page, viewport, num - 1, option);
       }
+      cb();
+      container.removeAttribute('hidden');
+      container.setAttribute('style', 'position: relative;');
     });
   });
   return {
@@ -46,7 +47,7 @@ function renderPage(pdfDoc: any, num: number, scale: number, option: IFactoryOpt
 
 function renderText(container: Element, page: any, viewport: any, index: number, options: IFactoryOptions) {
   // 异步textLayer渲染，将文字层渲染到指定容器中
-  page.getTextContent().then((textContent: ITextLayer) => {
+  page.getTextContent((textContent: ITextLayer) => {
     // 创建文本图层div
     const textLayerDiv = document.createElement('div');
     textLayerDiv.setAttribute('class', 'textLayer');
@@ -56,26 +57,14 @@ function renderText(container: Element, page: any, viewport: any, index: number,
         pageIndex: page.pageIndex,
         viewport: viewport
     });
+    textLayer.setTextContent(textContent);
     if (options.searchWhenRender) {
-      // console.log('yes has search when')
-      // FindCtrl.formatPageContent(textContent);
-      // const observer = observeDOM(textLayerDiv, function(mutationsList) {
-      //   observer.disconnect();
-      //   mutationsList.forEach((dom) => {
-      //     if (dom.addedNodes[0].nodeName.toLowerCase() === 'span') {
-      //       console.log(dom);
-      //     }
-      //   })
-      // })
       searchWhenRender(index, options, textLayerDiv, textContent);
     }
-    textLayer.setTextContent(textContent);
     textLayer.render();
     container.appendChild(textLayerDiv);
-    if (options.searchWhenRender) {
-      
-    }
   });
+  
 }
 
 export const r = {

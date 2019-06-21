@@ -1,6 +1,5 @@
 import { FactoryOptions } from './factory';
 import { FindCtrl } from '../search/findCtrl';
-import { ITextLayer } from '../interface';
 export declare class Renderer {
     private options;
     pdfDoc: any;
@@ -20,5 +19,4 @@ export declare class Renderer {
         container: HTMLDivElement;
     }>;
     emitProgress(): void;
-    renderWithSearch(index: number, text: ITextLayer, textLayerDiv: Element): ITextLayer;
 }

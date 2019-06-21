@@ -203,8 +203,14 @@ export class FindCtrl {
       const dom = document.querySelectorAll('.pdfkeywords.highlight');
       this.searchContentDOM = Array.from(dom);
     }
-    this.searchContentDOM[lastIndex].className = 'pdfkeywords highlight';
-    this.searchContentDOM[currentIndex].className = 'pdfkeywords highlight selected';
+    if (this.searchContentDOM[lastIndex]) {
+      this.searchContentDOM[lastIndex].className = 'pdfkeywords highlight';
+    }
+    if (this.searchContentDOM[currentIndex]) {
+      this.searchContentDOM[currentIndex].className = 'pdfkeywords highlight selected';
+    }
+    console.log('render key word: ', currentIndex, this.searchContentDOM[currentIndex]);
+    this.currentWordIndex = currentIndex;
     return {
       pageNumber: this.searchResult[currentIndex]
     };
@@ -262,6 +268,14 @@ export class FindCtrl {
 
   getTotalPage() {
     return this.pdfDoc.numPages;
+  }
+  getSearchInfo() {
+    return {
+      currentWordIndex: this.currentWordIndex
+    }
+  }
+  setCurrentWordIndex(index: number) {
+    this.currentWordIndex = index;
   }
 
 

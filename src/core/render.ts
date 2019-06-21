@@ -2,9 +2,10 @@ import FastScanner from 'fastscan';
 
 import { FactoryOptions } from './factory';
 import { FindCtrl } from '../search/findCtrl';
-import { ITextLayer } from '../interface';
+
 import { r, rs} from './renderer';
 import { progressEvent } from './events/progressEvent';
+
 
 export class Renderer {
   pdfDoc:any = null;
@@ -35,22 +36,17 @@ export class Renderer {
     if (!this.options.container) {
       throw new Error('must give a container in options!');
     }
-    const frag = document.createDocumentFragment();
+    // const frag = document.createDocumentFragment();
     for (let i = 0; i < this.pdfDoc.numPages; i++) {
-      if (i < 6) {
-        const cv = await this.renderPageSync(i + 1, true);
-        cv.container.removeAttribute('hidden');
-        this.options.container.appendChild(cv.container);
-      } else {
-        const cv = this.renderPage(i + 1, true);
-        cv.container.setAttribute('hidden', 'hidden');
-        frag.appendChild(cv.container);
-      }
+      const cv = await this.renderPageSync(i + 1, true);
+      cv.container.removeAttribute('hidden');
+      this.options.container.appendChild(cv.container);
       if (!this.options.multiple) {
         break;
       }
     }
-    this.options.container.appendChild(frag);
+    // this.options.container.appendChild(frag);
+    // searchAfterRender(this.options);
   }
 
   renderPage(num: number, needProgress=false) {
@@ -90,34 +86,6 @@ export class Renderer {
       total: this.pdfDoc.numPages,
       progress: this.loaded/this.pdfDoc.numPages*100
     })
-  }
-
-  // 渲染同时进行关键词搜索
-  renderWithSearch(index: number, text: ITextLayer, textLayerDiv: Element): ITextLayer {
-    const textContent: ITextLayer = JSON.parse(JSON.stringify(text));
-    const search: any = this.options.searchWhenRender;
-    const content = FindCtrl.formatPageContent(textContent) || '';
-    let scanner: any;
-    let word: any[] = [];
-    if (search instanceof Array) {
-      word = search;
-    } else if (typeof search === 'string') {
-      word = [search];
-    }
-    console.log('search word', word);
-    scanner = new FastScanner(word);
-    const result = scanner.search(content);
-    if (result.length) {
-      // 有结果
-      textContent.items.forEach(item => {
-        word.forEach(key => {
-          item.str = item.str.replace(new RegExp(key, 'g'), `<strong class="pdfkeywords highlight">${key}</strong>`);
-        })
-      })
-
-    }
-    this.findCtrl!.addContext(index, content);
-    return textContent;
   }
 
 //   /**

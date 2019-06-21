@@ -47,7 +47,7 @@ function renderPageSync(pdfDoc, num, scale, options) {
                     ctx = canvas.getContext('2d', { alpha: false });
                     container = document.createElement('div');
                     container.setAttribute('class', 'page-' + num);
-                    container.setAttribute('style', 'position: relative');
+                    container.setAttribute('style', 'position: relative;display: none;');
                     return [4 /*yield*/, pdfDoc.getPage(num)];
                 case 1:
                     page = _a.sent();
@@ -65,6 +65,7 @@ function renderPageSync(pdfDoc, num, scale, options) {
                     _a.sent();
                     container.appendChild(canvas);
                     container.removeAttribute('hidden');
+                    container.setAttribute('style', 'position: relative;');
                     if (!options.renderText) return [3 /*break*/, 4];
                     return [4 /*yield*/, renderTextSync(page, num - 1, viewport, options)];
                 case 3:
@@ -95,14 +96,13 @@ function renderTextSync(page, index, viewport, options) {
                         viewport: viewport,
                     });
                     textLayer.setTextContent(textContent);
+                    if (options.searchWhenRender) {
+                        // 有初始化的搜索关键字，需要进行搜索
+                        searchWhenRender_1.searchWhenRender(index, options, textLayerDiv, textContent);
+                    }
                     return [4 /*yield*/, textLayer.render()];
                 case 2:
                     _a.sent();
-                    if (options.searchWhenRender) {
-                        // 有初始化的搜索关键字，需要进行搜索
-                        // textContent = renderWithSearch(index, textContent, textLayerDiv);
-                        searchWhenRender_1.searchWhenRender(index, options, textLayerDiv, textContent);
-                    }
                     _a.label = 3;
                 case 3: return [2 /*return*/, textLayerDiv];
             }
