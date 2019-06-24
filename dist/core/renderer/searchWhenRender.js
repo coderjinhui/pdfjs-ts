@@ -39,6 +39,10 @@ function searchWhenRender(index, options, textLayerDiv, textContent) {
                 if (dom.addedNodes[0].nodeName.toLowerCase() === 'span') {
                     findCtrl.initSearchPageContent(index, result.length, content, dom.addedNodes);
                     findCtrl.renderKeywordInDOM(Array.from(dom.addedNodes), index, word);
+                    var searchInfo = findCtrl.getSearchInfo();
+                    if (searchInfo.currentWordIndex === 0) {
+                        findCtrl.renderSelectedKeyword(0, 0);
+                    }
                 }
             });
         });
@@ -47,9 +51,9 @@ function searchWhenRender(index, options, textLayerDiv, textContent) {
         //   findCtrl.initSearchPageContent(index, result.length, content, spanDOMs as any);
         //   findCtrl.renderKeywordInDOM(Array.from(spanDOMs), index, word);
         //   const searchInfo = findCtrl.getSearchInfo();
-        //   if (searchInfo.currentWordIndex === 0) {
-        //     findCtrl.renderSelectedKeyword(0, 0);
-        //   }
+        // if (searchInfo.currentWordIndex === 0) {
+        //   findCtrl.renderSelectedKeyword(0, 0);
+        // }
         // }, {once: true});
     }
     findCtrl.loaded++;
