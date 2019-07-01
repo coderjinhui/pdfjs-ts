@@ -25,7 +25,7 @@ export class FindCtrl {
   // 按顺序存储每个搜索词出现的pageNumber
   private searchResult: any = [];
   // 按顺序存储每个搜索关键词的DOM
-  private searchContentDOM: Element[] = [];
+  searchContentDOM: Element[] = [];
   // 存储当前的搜索高亮index
   private currentWordIndex = 0;
   // 存储keyword的source
@@ -235,8 +235,14 @@ export class FindCtrl {
   renderPrev() {
     const last = this.currentWordIndex;
     this.currentWordIndex--;
+    let len = 0;
+    for (let i = 0; i < this.searchPage.length; i++) {
+      if (this.searchPage[i]) {
+        len+=this.searchPage[i];
+      }
+    }
     if (this.currentWordIndex <= 0) {
-      this.currentWordIndex = this.searchResult.length - 1;
+      this.currentWordIndex = len - 1;
     }
     const r = this.renderSelectedKeyword(last, this.currentWordIndex);
     return r;
@@ -250,6 +256,11 @@ export class FindCtrl {
     spans.forEach(span => {
       this.keywordSourceHTML[index].push(span.innerHTML);
     })
+  }
+  initsearchContentDOM() {
+    const doms = document.querySelectorAll('.pdfkeywords.highlight');
+    this.searchContentDOM = Array.from(doms);
+    console.log('init search dom');
   }
   renderKeywordInDOM(pageDoms: any[], index: number, words: string[]) {
     const spanHTML = this.keywordSourceHTML[index];
@@ -265,6 +276,7 @@ export class FindCtrl {
     });
     this.keywordSourceHTMLlength = this.keywordSourceHTML.length;
   }
+
 
   getTotalPage() {
     return this.pdfDoc.numPages;

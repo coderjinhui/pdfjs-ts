@@ -25,7 +25,7 @@ async function renderPageSync(pdfDoc:any, num: number, scale: number, options: I
     await page.render(renderContext).promise;
     container.appendChild(canvas);
     container.removeAttribute('hidden');
-    container.setAttribute('style', 'position: relative;');
+    container.setAttribute('style', 'position: relative;display: inline-block;');
     if (options.renderText) {
       // 将文本图层div添加至每页pdf的div中
       const textLayerDiv = await renderTextSync(page, num - 1, viewport, options);

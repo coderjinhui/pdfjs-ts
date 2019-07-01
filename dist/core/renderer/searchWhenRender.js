@@ -39,6 +39,7 @@ function searchWhenRender(index, options, textLayerDiv, textContent) {
                 if (dom.addedNodes[0].nodeName.toLowerCase() === 'span') {
                     findCtrl.initSearchPageContent(index, result.length, content, dom.addedNodes);
                     findCtrl.renderKeywordInDOM(Array.from(dom.addedNodes), index, word);
+                    findCtrl.initsearchContentDOM();
                     var searchInfo = findCtrl.getSearchInfo();
                     if (searchInfo.currentWordIndex === 0) {
                         findCtrl.renderSelectedKeyword(0, 0);

@@ -65,7 +65,7 @@ function renderPageSync(pdfDoc, num, scale, options) {
                     _a.sent();
                     container.appendChild(canvas);
                     container.removeAttribute('hidden');
-                    container.setAttribute('style', 'position: relative;');
+                    container.setAttribute('style', 'position: relative;display: inline-block;');
                     if (!options.renderText) return [3 /*break*/, 4];
                     return [4 /*yield*/, renderTextSync(page, num - 1, viewport, options)];
                 case 3:

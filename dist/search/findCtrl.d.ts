@@ -16,7 +16,7 @@ export declare class FindCtrl {
     private pdfText;
     private searchPage;
     private searchResult;
-    private searchContentDOM;
+    searchContentDOM: Element[];
     private currentWordIndex;
     private keywordSourceHTML;
     private keywordSourceHTMLlength;
@@ -48,6 +48,7 @@ export declare class FindCtrl {
         pageNumber: any;
     };
     initSearchPageContent(index: number, numInPage: number, content: string, spans: Element[]): void;
+    initsearchContentDOM(): void;
     renderKeywordInDOM(pageDoms: any[], index: number, words: string[]): void;
     getTotalPage(): any;
     getSearchInfo(): {

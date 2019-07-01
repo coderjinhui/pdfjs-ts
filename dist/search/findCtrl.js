@@ -223,8 +223,14 @@ var FindCtrl = /** @class */ (function () {
     FindCtrl.prototype.renderPrev = function () {
         var last = this.currentWordIndex;
         this.currentWordIndex--;
+        var len = 0;
+        for (var i = 0; i < this.searchPage.length; i++) {
+            if (this.searchPage[i]) {
+                len += this.searchPage[i];
+            }
+        }
         if (this.currentWordIndex <= 0) {
-            this.currentWordIndex = this.searchResult.length - 1;
+            this.currentWordIndex = len - 1;
         }
         var r = this.renderSelectedKeyword(last, this.currentWordIndex);
         return r;
@@ -237,6 +243,11 @@ var FindCtrl = /** @class */ (function () {
         spans.forEach(function (span) {
             _this.keywordSourceHTML[index].push(span.innerHTML);
         });
+    };
+    FindCtrl.prototype.initsearchContentDOM = function () {
+        var doms = document.querySelectorAll('.pdfkeywords.highlight');
+        this.searchContentDOM = Array.from(doms);
+        console.log('init search dom');
     };
     FindCtrl.prototype.renderKeywordInDOM = function (pageDoms, index, words) {
         var spanHTML = this.keywordSourceHTML[index];

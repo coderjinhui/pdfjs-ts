@@ -37,7 +37,7 @@ function renderPage(pdfDoc: any, num: number, scale: number, option: IFactoryOpt
       }
       cb();
       container.removeAttribute('hidden');
-      container.setAttribute('style', 'position: relative;');
+      container.setAttribute('style', 'position: relative;display:inline-block;');
     });
   });
   return {

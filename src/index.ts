@@ -13,7 +13,7 @@ export class PDFTS {
   public findCtrl!: FindCtrl;
 
   // pdf 相关属性
-  pdfDoc = null;
+  pdfDoc: any = null;
 
   constructor(option: FactoryOptions) {
     PDFJS.GlobalWorkerOptions.workerSrc = option.workerURL;

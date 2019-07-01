@@ -68,7 +68,7 @@ function renderPage(pdfDoc, num, scale, option, cb) {
                 }
                 cb();
                 container.removeAttribute('hidden');
-                container.setAttribute('style', 'position: relative;');
+                container.setAttribute('style', 'position: relative;display:inline-block;');
                 return [2 /*return*/];
             });
         }); });
